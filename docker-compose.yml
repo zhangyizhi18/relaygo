@@ -1,0 +1,44 @@
+# RelayGo · 中转服务（Docker Compose）
+#
+# 配置怎么改（二选一，都不需要懂环境变量）：
+#   方式A 直接改下面 environment 里的值；
+#   方式B 在本文件所在目录新建一个 .env 文件，把要改的项写进去即可
+#         （docker compose 会自动读取同目录的 .env，不用写进本文件），例如：
+#           RELAY_SIGNAL_KEY=你的聚宽密钥
+#           RELAY_EXECUTOR_KEY=你的执行端密钥
+#           RELAY_WEB_SECRET=一段随机字符串
+#           RELAY_WEB_ADMIN_PASSWORD=你的管理员密码
+#         参考 release 包里附带的「中转服务配置模板-*.env.example」，改完改名成 .env 即可。
+#
+# 启动：docker compose up -d --build
+# 控制台：http://<服务器IP>:5010/console/
+services:
+  jq-relay:
+    build: ./relay_server
+    container_name: jq-relay
+    restart: unless-stopped
+    ports:
+      - "5010:5010"
+    volumes:
+      - jq-relay-data:/data
+      # 授权账号由机器码(/etc/machine-id)派生：挂载宿主机的固定 machine-id（只读），
+      # 否则容器重建后授权账号会变、需要重新激活。若宿主机没有该文件，
+      # 先在宿主机执行：sudo sh -c 'cat /proc/sys/kernel/random/uuid | tr -d "-" > /etc/machine-id'
+      - /etc/machine-id:/etc/machine-id:ro
+    environment:
+      # 容器默认 UTC 会让信号/委托时间戳慢 8 小时，这里固定北京时间
+      TZ: "${RELAY_TZ:-Asia/Shanghai}"
+      # 冒号后的默认值 = 没在 .env 里写、也没导出环境变量时使用；改成你自己的即可
+      RELAY_SIGNAL_KEY: "${RELAY_SIGNAL_KEY:-jq-signal-key-2026-change-me}"
+      RELAY_EXECUTOR_KEY: "${RELAY_EXECUTOR_KEY:-executor-key-2026-change-me}"
+      RELAY_MAX_PENDING: "${RELAY_MAX_PENDING:-500}"
+      RELAY_TTL_HOURS: "${RELAY_TTL_HOURS:-24}"
+      # ---- Web 控制台（浏览器打开 http://<服务器IP>:5010/console/）----
+      RELAY_WEB_SECRET: "${RELAY_WEB_SECRET:-请改成一段随机字符串-用于登录会话签名}"
+      RELAY_WEB_ADMIN: "${RELAY_WEB_ADMIN:-admin}"
+      RELAY_WEB_ADMIN_PASSWORD: "${RELAY_WEB_ADMIN_PASSWORD:-请改成你的管理员密码}"
+      # 端口如需改动，改上面 ports 的同时把下面这行也改掉
+      RELAY_PORT: "${RELAY_PORT:-5010}"
+
+volumes:
+  jq-relay-data:

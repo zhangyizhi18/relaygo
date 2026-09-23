@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>聚宽中转下单系统 · 用户手册 v1.3.0</title>
+<style>
+  :root{
+    --bg:#f5f7fa; --card:#ffffff; --border:#e2e8f0; --text:#1f2937; --muted:#64748b;
+    --primary:#1d5fbf; --primary-bg:#eaf1fb; --warn:#b45309; --warn-bg:#fef6e7;
+    --danger:#b42318; --danger-bg:#fdecea; --ok:#15803d; --ok-bg:#e9f7ef; --code:#f1f5f9;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,"Segoe UI","Microsoft YaHei",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.75;font-size:15px}
+  .wrap{max-width:960px;margin:0 auto;padding:0 20px 80px}
+  header.cover{background:linear-gradient(180deg,#1d5fbf,#17499a);color:#fff;padding:56px 20px 44px;margin-bottom:28px}
+  header.cover .inner{max-width:960px;margin:0 auto}
+  header.cover h1{margin:0 0 8px;font-size:30px;font-weight:600;letter-spacing:.5px}
+  header.cover p.sub{margin:0;opacity:.92;font-size:15px}
+  header.cover .meta{margin-top:20px;display:flex;flex-wrap:wrap;gap:10px}
+  header.cover .meta span{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);
+    border-radius:999px;padding:4px 14px;font-size:13px}
+  h2{font-size:21px;margin:38px 0 12px;padding-bottom:8px;border-bottom:2px solid var(--border);font-weight:600}
+  h3{font-size:17px;margin:26px 0 8px;font-weight:600;color:#111827}
+  h4{font-size:15px;margin:18px 0 6px;font-weight:600;color:#374151}
+  p{margin:8px 0}
+  ul,ol{margin:8px 0;padding-left:24px}
+  li{margin:4px 0}
+  code{background:var(--code);border:1px solid var(--border);border-radius:4px;padding:1px 6px;
+    font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;font-size:13px;color:#0f172a}
+  pre{background:#0f172a;color:#e6edf3;border-radius:10px;padding:16px 18px;overflow-x:auto;
+    font-family:"SFMono-Regular",Consolas,Menlo,monospace;font-size:13px;line-height:1.6}
+  pre code{background:none;border:none;color:inherit;padding:0}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;background:var(--card)}
+  th,td{border:1px solid var(--border);padding:9px 12px;text-align:left;vertical-align:top}
+  th{background:#f8fafc;font-weight:600}
+  tr:nth-child(even) td{background:#fcfdff}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin:16px 0}
+  .note,.warn,.danger,.ok{border-radius:10px;padding:12px 16px;margin:14px 0;border-left:4px solid}
+  .note{background:var(--primary-bg);border-color:var(--primary)}
+  .warn{background:var(--warn-bg);border-color:var(--warn)}
+  .danger{background:var(--danger-bg);border-color:var(--danger)}
+  .ok{background:var(--ok-bg);border-color:var(--ok)}
+  .note b,.warn b,.danger b,.ok b{display:block;margin-bottom:2px}
+  .toc{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 24px}
+  .toc h2{margin-top:0;border:none;font-size:17px}
+  .toc ol{columns:2;column-gap:36px;margin:0;padding-left:20px}
+  .toc a{color:var(--primary);text-decoration:none}
+  .toc a:hover{text-decoration:underline}
+  .pill{display:inline-block;background:var(--primary-bg);color:var(--primary);border-radius:999px;
+    padding:1px 10px;font-size:12px;font-weight:600;margin-right:6px}
+  .step{display:flex;gap:12px;margin:10px 0}
+  .step .no{flex:0 0 26px;height:26px;border-radius:50%;background:var(--primary);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;margin-top:3px}
+  .muted{color:var(--muted)}
+  footer{max-width:960px;margin:40px auto 0;padding:20px;color:var(--muted);font-size:13px;
+    border-top:1px solid var(--border);text-align:center}
+  a.back{color:var(--primary);text-decoration:none;font-size:13px}
+  @media print{header.cover{background:#1d5fbf !important;-webkit-print-color-adjust:exact}pre{background:#f1f5f9;color:#0f172a}}
+</style>
+</head>
+<body>
+
+<header class="cover">
+  <div class="inner">
+    <h1>聚宽中转下单系统 · 用户手册</h1>
+    <p class="sub">聚宽云端策略 → 自建 Flask 中转 API → Windows 执行端 → 券商下单，一套服务，三种下单方式</p>
+    <div class="meta">
+      <span>版本 v1.3.0</span>
+      <span>打包时间 20260911-1617</span>
+      <span>发布日期 2026-09-11</span>
+      <span>适用平台 Windows / Linux(Docker)</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+<div class="toc">
+  <h2>目录</h2>
+  <ol>
+    <li><a href="#s1">产品简介与工作原理</a></li>
+    <li><a href="#s2">系统架构与组件</a></li>
+    <li><a href="#s3">三种下单方案怎么选</a></li>
+    <li><a href="#s4">快速开始（三条路径）</a></li>
+    <li><a href="#s5">中转服务部署 · exe 版</a></li>
+    <li><a href="#s6">中转服务部署 · Docker 版</a></li>
+    <li><a href="#s7">执行端部署</a></li>
+    <li><a href="#s8">聚宽策略端接入</a></li>
+    <li><a href="#s9">Web 控制台使用手册</a></li>
+    <li><a href="#s10">风控机制</a></li>
+    <li><a href="#s11">同花顺验证码处理</a></li>
+    <li><a href="#s12">常见问题 FAQ</a></li>
+    <li><a href="#s13">发布与升级约定</a></li>
+    <li><a href="#s14">合规与风险提示</a></li>
+    <li><a href="#s15">附录</a></li>
+  </ol>
+</div>
+
+<h2 id="s1">1. 产品简介与工作原理</h2>
+<p>本系统解决一个具体问题：<b>让跑在聚宽云端的策略，能够把你本机券商客户端（同花顺 / miniQMT）里的真实账户下出去单</b>。</p>
+<p>聚宽云端跑在互联网上，够不着你本机的券商客户端；券商客户端又必须在你的 Windows 桌面上运行。于是在中间加一层 <b>中转服务</b>，把两者连起来：</p>
+
+<pre><code>聚宽云端策略
+      │  POST /api/signal   （X-API-Key 鉴权）
+      ▼
+中转服务（Flask + SQLite，可跑在云服务器 / Docker / exe）
+      │  POST /api/signal/poll   ← 执行端主动来拉
+      ▼
+执行端（跑在有券商客户端的 Windows 机器上）
+      │  easytrader / xtquant
+      ▼
+同花顺客户端 / miniQMT  →  券商  →  成交</code></pre>
+
+<p>核心设计要点：</p>
+<ul>
+  <li><b>中转服务不碰券商</b>，只做"信号落库 + 排队 + 回报"，所以极其稳定，可 7×24 跑在云端。</li>
+  <li><b>执行端主动拉取</b>（轮询），不用公网暴露 Windows 机器，也不需要端口映射。</li>
+  <li><b>所有下单都必须过执行端风控</b>（<code>executor/risk.py</code>），无论是聚宽策略信号还是控制台手工下单。</li>
+  <li><b>信号幂等去重</b>：同一个 <code>order_id</code> 重复上报不会重复下单。</li>
+</ul>
+
+<h2 id="s2">2. 系统架构与组件</h2>
+<table>
+  <tr><th>组件</th><th>位置</th><th>职责</th><th>能否容器化</th></tr>
+  <tr><td>中转服务 <code>relay_server</code></td><td>云服务器 / NAS</td><td>接收信号、落库排队、Web 控制台、下发任务、收回报</td><td>✅ Docker / exe</td></tr>
+  <tr><td>执行端 <code>executor</code></td><td>有券商客户端的 Windows</td><td>轮询信号与任务、风控、调用券商、回报结果</td><td>❌ 必须 Windows 桌面</td></tr>
+  <tr><td>聚宽策略 <code>joinquant/jq_signal.py</code></td><td>聚宽云端</td><td>把策略下单意图 POST 给中转服务</td><td>—</td></tr>
+  <tr><td>Web 控制台</td><td>浏览器</td><td>人工下单/查询/用户/审计（内置于中转服务）</td><td>—</td></tr>
+</table>
+
+<div class="note"><b>为什么执行端不能 Docker 化</b>
+同花顺客户端 UI 自动化与 miniQMT 都需要真实 Windows 桌面（GUI 窗口、剪贴板、前台锁），Docker 里没有桌面，无法运行。</div>
+
+<h2 id="s3">3. 三种下单方案怎么选</h2>
+<p>在 <code>executor/config.py</code> 里改 <code>MODE</code> 即可一键切换（也可用环境变量 <code>EXECUTOR_MODE</code>）：</p>
+<table>
+  <tr><th>MODE</th><th>方案</th><th>适用场景</th><th>前置条件</th><th>推荐度</th></tr>
+  <tr><td><code>dry_run</code></td><td>模拟</td><td>先跑通全链路，绝不下真单</td><td>无</td><td>入门必用</td></tr>
+  <tr><td><code>ths</code></td><td>A. 同花顺客户端 UI 自动化</td><td>已有同花顺下单客户端；无需额外权限</td><td>装 easytrader；同花顺登录并关闭自动升级</td><td>易上手</td></tr>
+  <tr><td><code>thsauto</code></td><td>B. 安卓模拟器</td><td>同花顺 APP 方案</td><td>雷电模拟器 + 同花顺 APP + thsauto 服务</td><td>较绕</td></tr>
+  <tr><td><code>miniqmt</code></td><td>C. QMT 官方接口</td><td>生产环境（稳定、有官方通道）</td><td>券商开通 QMT/miniQMT 权限</td><td>★ 最推荐</td></tr>
+</table>
+<div class="warn"><b>合规提示</b>
+程序化交易需符合券商与监管要求，实盘前请向券商报备。生产环境优先选 C（miniQMT 官方接口），A（UI 自动化）仅作为兼容手段。</div>
+
+<h2 id="s4">4. 快速开始（三条路径）</h2>
+<div class="card">
+  <h4>路径一：只想快速体验（10 分钟）</h4>
+  <div class="step"><div class="no">1</div><div>解压运行中转服务 exe，浏览器打开控制台，用 <code>admin / admin123</code> 登录。</div></div>
+  <div class="step"><div class="no">2</div><div>在另一台/同一台机器运行执行端 exe，模式选 <code>dry_run</code>。</div></div>
+  <div class="step"><div class="no">3</div><div>控制台「概览」看到执行端在线 → 「账户查询」能看到模拟资金 → 链路通了。</div></div>
+</div>
+<div class="card">
+  <h4>路径二：跑真实同花顺下单</h4>
+  <div class="step"><div class="no">1</div><div>部署中转服务（exe 或 Docker），配置好密钥。</div></div>
+  <div class="step"><div class="no">2</div><div>Windows 上登录同花顺下单客户端，运行执行端，<code>EXECUTOR_MODE=ths</code>。</div></div>
+  <div class="step"><div class="no">3</div><div>先用控制台「手动下单」下 100 股小单验证，确认无误后再接聚宽策略。</div></div>
+</div>
+<div class="card">
+  <h4>路径三：生产环境（推荐）</h4>
+  <div class="step"><div class="no">1</div><div>中转服务用 Docker 跑在云服务器，密钥改掉，控制台改密码。</div></div>
+  <div class="step"><div class="no">2</div><div>执行端用 <code>miniqmt</code> 模式，用 NSSM/任务计划注册为开机自启。</div></div>
+  <div class="step"><div class="no">3</div><div>聚宽策略接入 <code>jq_signal.py</code>，并把风控阈值调到合适值。</div></div>
+</div>
+
+<h2 id="s5">5. 中转服务部署 · exe 版</h2>
+<h3>5.1 安装</h3>
+<ol>
+  <li>把 <code>jq-relay-v1.3.0-20260911-1617-win64.exe</code> 放到一个<b>单独目录</b>（如 <code>D:\jq-relay\</code>）。</li>
+  <li>双击运行。首次运行会在同目录生成数据库 <code>relay_data.db</code>。</li>
+  <li>默认监听 <b>5010</b> 端口。防火墙需放行该端口（云服务器还要在安全组放行）。</li>
+</ol>
+<div class="warn"><b>建议：不要双击，先设好密钥再启动</b>
+双击用的是默认密钥，正式使用前先在 cmd 里设置环境变量，或用部署脚本启动。</div>
+
+<h3>5.2 启动并设置密钥</h3>
+<pre><code>rem 在本目录打开 cmd，逐行执行（按需改值）
+set RELAY_SIGNAL_KEY=你的聚宽密钥
+set RELAY_EXECUTOR_KEY=你的执行端密钥
+set RELAY_WEB_SECRET=一段随机字符串
+set RELAY_WEB_ADMIN_PASSWORD=你的控制台管理员密码
+jq-relay-v1.3.0-20260911-1617-win64.exe</code></pre>
+
+<h3>5.3 验证</h3>
+<pre><code>rem 服务健康检查（应看到 "version":"v1.3.0"）
+curl http://127.0.0.1:5010/api/status
+
+rem 浏览器打开控制台登录页
+start http://127.0.0.1:5010/console/</code></pre>
+
+<h3>5.4 注册为开机自启服务（可选）</h3>
+<p>推荐用 <a href="https://nssm.cc/">NSSM</a> 或 Windows 任务计划程序，把 exe 注册为后台服务，环境变量写进服务配置。也可用「任务计划程序」→ 创建任务 → 触发器"计算机启动时"。</p>
+
+<h2 id="s6">6. 中转服务部署 · Docker 版</h2>
+<p>适用于装了 docker + docker compose 的 Linux 服务器（云上推荐）。发布包为 <b>源码包</b>，解压后现场构建，最通用。</p>
+<h3>6.1 三步启动</h3>
+<pre><code>unzip jq-relay-docker-v1.3.0-20260911-1617.zip
+cd jq-relay-docker-v1.3.0-20260911-1617
+
+# 第一步：改 docker-compose.yml 里 environment 段的 4 个密钥
+#   RELAY_SIGNAL_KEY / RELAY_EXECUTOR_KEY / RELAY_WEB_SECRET / RELAY_WEB_ADMIN_PASSWORD
+
+docker compose up -d --build      # 构建并启动
+curl http://127.0.0.1:5010/api/status   # 看到 "version":"v1.3.0" 即成功</code></pre>
+<h3>6.2 常用维护</h3>
+<table>
+  <tr><th>操作</th><th>命令</th></tr>
+  <tr><td>看日志</td><td><code>docker compose logs -f</code></td></tr>
+  <tr><td>重启</td><td><code>docker compose restart</code></td></tr>
+  <tr><td>停止（数据保留）</td><td><code>docker compose down</code></td></tr>
+  <tr><td>改源码后重新生效</td><td><code>docker compose up -d --build</code></td></tr>
+  <tr><td>查看当前镜像</td><td><code>docker images</code></td></tr>
+</table>
+<div class="note"><b>数据不会丢</b>
+数据库落在 named volume <code>jq-relay-data</code>（容器内 <code>/data/relay_data.db</code>），容器重建、升级都不受影响。</div>
+
+<h3>6.3 环境变量一览（中转服务）</h3>
+<table>
+  <tr><th>变量</th><th>默认值</th><th>说明</th></tr>
+  <tr><td><code>RELAY_HOST</code></td><td>0.0.0.0</td><td>监听地址</td></tr>
+  <tr><td><code>RELAY_PORT</code></td><td>5010</td><td>监听端口</td></tr>
+  <tr><td><code>RELAY_DB_PATH</code></td><td>exe 旁 relay_data.db</td><td>SQLite 数据库路径</td></tr>
+  <tr><td><code>RELAY_SIGNAL_KEY</code></td><td>jq-signal-key-2026-change-me</td><td>聚宽端密钥，<b>务必修改</b></td></tr>
+  <tr><td><code>RELAY_EXECUTOR_KEY</code></td><td>executor-key-2026-change-me</td><td>执行端密钥，<b>务必修改</b></td></tr>
+  <tr><td><code>RELAY_MAX_PENDING</code></td><td>500</td><td>积压信号上限，超过拒收</td></tr>
+  <tr><td><code>RELAY_TTL_HOURS</code></td><td>24</td><td>信号过期小时数</td></tr>
+  <tr><td><code>RELAY_WEB_SECRET</code></td><td>relay-web-secret-change-me</td><td>控制台会话签名密钥，公网<b>务必修改</b></td></tr>
+  <tr><td><code>RELAY_WEB_ADMIN</code></td><td>admin</td><td>默认管理员用户名</td></tr>
+  <tr><td><code>RELAY_WEB_ADMIN_PASSWORD</code></td><td>admin123</td><td>默认管理员密码，登录后请改</td></tr>
+  <tr><td><code>RELAY_WEB_SESSION_HOURS</code></td><td>12</td><td>控制台登录有效期（小时）</td></tr>
+  <tr><td><code>RELAY_TASK_TTL</code></td><td>180</td><td>控制台任务超时作废（秒）</td></tr>
+  <tr><td><code>RELAY_TASK_WAIT</code></td><td>30</td><td>控制台等待执行端回报上限（秒）</td></tr>
+  <tr><td><code>RELAY_EXECUTOR_ALIVE</code></td><td>30</td><td>执行端心跳判定在线阈值（秒）</td></tr>
+</table>
+
+<h2 id="s7">7. 执行端部署</h2>
+<h3>7.1 方式一：exe 版（推荐给最终用户）</h3>
+<pre><code>rem 把 jq-executor-v1.3.0-20260911-1617-win64.exe 放到执行端机器任意目录
+set EXECUTOR_MODE=ths
+set EXECUTOR_RELAY_URL=http://中转服务IP:5010
+set EXECUTOR_API_KEY=与中转服务的 RELAY_EXECUTOR_KEY 完全一致
+jq-executor-v1.3.0-20260911-1617-win64.exe</code></pre>
+<p>日志 <code>executor.log</code> 生成在 exe 同目录。启动后可自检依赖是否完整：</p>
+<pre><code>set EXECUTOR_SELFCHECK=1
+jq-executor-v1.3.0-20260911-1617-win64.exe
+rem 打印 SELFCHECK_OK version=v1.3.0 mode=... 即依赖完整</code></pre>
+
+<h3>7.2 方式二：源码 + 一键启动 bat</h3>
+<p>项目根目录的 <code>启动执行端.bat</code> 会自动建虚拟环境、装依赖、并让你选模式（1=dry_run / 2=ths）。首次运行需几分钟。</p>
+<div class="warn"><b>必须的依赖顺序</b>
+<code>easytrader</code> 内部锁定 <code>pywinauto==0.6.6</code>，但 0.6.6 在 64 位 Python 上有批量 SendInput bug，必须再单独 <code>pip install pywinauto==0.6.8</code>。bat 已自动处理，手动安装时不要漏。</div>
+
+<h3>7.3 三种方案的具体配置</h3>
+<h4>A. 同花顺（MODE=ths）</h4>
+<ul>
+  <li>登录同花顺下单客户端（<code>xiadan.exe</code>），并<b>关闭自动升级</b>。</li>
+  <li><code>executor/config.py</code> 的 <code>THS_XIADAN_PATH</code> 指向 xiadan.exe 完整路径。</li>
+  <li>需要 <code>easytrader</code>、<code>ddddocr</code>（验证码识别）、<code>pywinauto==0.6.8</code>。</li>
+</ul>
+<h4>B. 安卓模拟器（MODE=thsauto）</h4>
+<ul>
+  <li>雷电模拟器安装同花顺 APP，启动 thsauto 服务：<code>thsauto run --host=0.0.0.0 --port=5001</code>。</li>
+  <li>填 <code>THSAUTO_URL</code>、<code>THSAUTO_ADDR</code>（adb 地址，一般 <code>emulator-5554</code>）。</li>
+</ul>
+<h4>C. miniQMT（MODE=miniqmt，最推荐）</h4>
+<ul>
+  <li>券商开通 QMT/miniQMT 权限，登录 miniQMT 客户端。</li>
+  <li>填 <code>QMT_PATH</code>（userdata_mini 目录）、<code>QMT_ACCOUNT_ID</code>（资金账号）。</li>
+  <li>把 QMT 目录里的 <code>xtquant</code> 文件夹复制到执行端目录。</li>
+</ul>
+
+<h3>7.4 执行端环境变量</h3>
+<table>
+  <tr><th>变量</th><th>默认值</th><th>说明</th></tr>
+  <tr><td><code>EXECUTOR_MODE</code></td><td>dry_run</td><td>dry_run / ths / thsauto / miniqmt</td></tr>
+  <tr><td><code>EXECUTOR_RELAY_URL</code></td><td>http://127.0.0.1:5010</td><td>中转服务地址</td></tr>
+  <tr><td><code>EXECUTOR_API_KEY</code></td><td>executor-key-2026-change-me</td><td>必须与中转 RELAY_EXECUTOR_KEY 一致</td></tr>
+  <tr><td><code>EXECUTOR_POLL_INTERVAL</code></td><td>3</td><td>轮询间隔（秒）</td></tr>
+  <tr><td><code>EXECUTOR_SELFCHECK</code></td><td>-</td><td>=1 时只做依赖自检后退出</td></tr>
+</table>
+
+<h2 id="s8">8. 聚宽策略端接入</h2>
+<p>在聚宽策略里引入 <code>joinquant/jq_signal.py</code>，把下单意图上报给中转服务。要点：</p>
+<ol>
+  <li>把 <code>RELAY_URL</code> 改成你的中转服务公网地址。</li>
+  <li>把 <code>API_KEY</code> 改成与 <code>RELAY_SIGNAL_KEY</code> 一致的值。</li>
+  <li>每个信号必须有<b>全局唯一</b>的 <code>order_id</code>（建议用 <code>策略名+股票+日期+序号</code>），中转服务靠它幂等去重。</li>
+</ol>
+<pre><code># 策略下单处调用（示意）
+send_signal(order_id="myStrat-20260911-001",
+            security="600519.XSHG", side="buy", amount=100, price=None)</code></pre>
+<table>
+  <tr><th>字段</th><th>必填</th><th>说明</th></tr>
+  <tr><td><code>order_id</code></td><td>✅</td><td>唯一标识，用于幂等去重</td></tr>
+  <tr><td><code>security</code></td><td>✅</td><td>聚宽代码，如 <code>600519.XSHG</code> / <code>000001.XSHE</code></td></tr>
+  <tr><td><code>side</code></td><td>✅</td><td><code>buy</code> 或 <code>sell</code></td></tr>
+  <tr><td><code>amount</code></td><td>✅</td><td>股数（正整数）</td></tr>
+  <tr><td><code>price</code></td><td>—</td><td>委托价；留空/0 时执行端自动取最新价（A 股客户端只支持限价）</td></tr>
+</table>
+
+<h2 id="s9">9. Web 控制台使用手册</h2>
+<p>浏览器打开 <code>http://&lt;中转服务IP&gt;:5010/console/</code>（本机为 <code>http://127.0.0.1:5010/console/</code>）。</p>
+<div class="danger"><b>首次登录后请立即改密码</b>
+默认账号 <code>admin / admin123</code>。右上角可修改自己的密码。公网部署务必设置 <code>RELAY_WEB_SECRET</code>。</div>
+
+<h3>9.1 角色与权限矩阵</h3>
+<table>
+  <tr><th>功能</th><th>viewer 只读</th><th>trader 交易员</th><th>admin 管理员</th></tr>
+  <tr><td>概览</td><td>✅</td><td>✅</td><td>✅</td></tr>
+  <tr><td>账户查询</td><td>✅</td><td>✅</td><td>✅</td></tr>
+  <tr><td>任务队列</td><td>✅</td><td>✅</td><td>✅</td></tr>
+  <tr><td>手动下单 / 撤单</td><td>—</td><td>✅</td><td>✅</td></tr>
+  <tr><td>用户管理</td><td>—</td><td>—</td><td>✅</td></tr>
+  <tr><td>审计日志</td><td>—</td><td>—</td><td>✅</td></tr>
+</table>
+
+<h3>9.2 概览</h3>
+<p>显示中转服务版本、执行端在线状态与最后心跳、信号统计、任务统计、最近信号。<b>下单前先确认执行端在线</b>。</p>
+
+<h3>9.3 账户查询</h3>
+<p>四类实时查询：资金、持仓、当日委托、当日成交。查询会下发任务给执行端并向券商客户端实时读取，通常 1～5 秒返回。</p>
+<div class="warn"><b>查询为空或被弹窗拦截</b>
+若同花顺弹出验证码/对话框，可能导致本次读取失败，重试即可；执行端有自动识别与人工兜底机制（见第 11 节）。</div>
+
+<h3>9.4 手动下单与撤单</h3>
+<ol>
+  <li>填写证券代码（<code>600519.XSHG</code> 格式）、方向（买/卖）、数量（股）、价格（可留空=最新价）。</li>
+  <li>点「下单」。控制台把任务下发给执行端，同步等待回报后显示委托号与结果。</li>
+  <li>撤单：在「当日委托」里找到委托号，填进撤单框点「撤单」。</li>
+</ol>
+<div class="note"><b>防重复下单</b>
+同一证券+方向+数量在 15 秒内重复提交会被拦截（HTTP 429），避免手抖点两次。</div>
+
+<h3>9.5 任务队列</h3>
+<p>记录每一次操作的执行记录与结果（含状态：pending/running/done/failed/timeout）。排查问题时先看这里。</p>
+
+<h3>9.6 用户管理（管理员）</h3>
+<p>新建用户、改角色、禁用/启用、重置密码、删除。系统强制保留至少一个启用状态的管理员，且不能删除当前登录账号。</p>
+
+<h3>9.7 审计日志（管理员）</h3>
+<p>记录：谁、何时、从哪个 IP、做了什么、结果如何。覆盖登录、登录失败、查询、下单、撤单、用户增删改、权限拒绝等。可按用户名/动作/关键字筛选。</p>
+
+<h2 id="s10">10. 风控机制</h2>
+<p>所有下单（聚宽信号 + 控制台手工）都经过 <code>executor/risk.py</code>，任一项不通过即拒绝并回报原因：</p>
+<table>
+  <tr><th>检查项</th><th>参数（executor/config.py）</th><th>默认</th></tr>
+  <tr><td>代码白名单</td><td><code>CODE_WHITELIST</code></td><td>空=不限制</td></tr>
+  <tr><td>单笔最大股数</td><td><code>MAX_SINGLE_AMOUNT</code></td><td>10000</td></tr>
+  <tr><td>当日累计上限</td><td><code>MAX_DAILY_AMOUNT</code></td><td>50000</td></tr>
+  <tr><td>价格偏差</td><td><code>MAX_PRICE_DEVIATION</code></td><td>3%</td></tr>
+  <tr><td>卖出持仓校验</td><td>自动查询实际持仓</td><td>持仓不足即拒</td></tr>
+</table>
+<div class="danger"><b>实盘前务必按自己的资金规模调整阈值</b>
+默认值偏保守。放宽容错意味着放大风险，请谨慎设置。</div>
+
+<h2 id="s11">11. 同花顺验证码处理</h2>
+<p>同花顺会检测频繁自动操作并弹验证码窗口（反机器人机制，无法根除）。本系统用三级降级把影响降到最低：</p>
+<div class="card">
+  <div class="step"><div class="no">1</div><div><b>自动识别（主力）</b>：<code>ddddocr</code> 深度学习 OCR 识别验证码 → 自动填入 → 回车，最多重试 5 轮。</div></div>
+  <div class="step"><div class="no">2</div><div><b>人工兜底</b>：连续失败时蜂鸣报警 3 声 + 存图 <code>captcha_last.png</code>，90 秒内人工输入也认，检测到填好会自动回车。</div></div>
+  <div class="step"><div class="no">3</div><div><b>最后手段</b>：点取消关闭弹窗，操作如实报 failed，绝不带病重试。</div></div>
+</div>
+<p>每处理一次验证码，执行端自动降频 120 秒，减少再次触发。可单独自测：<code>python executor/captcha.py</code>（只检测弹窗，不做任何交易）。</p>
+
+<h2 id="s12">12. 常见问题 FAQ</h2>
+<table>
+  <tr><th>问题</th><th>原因 / 解决</th></tr>
+  <tr><td>双击 exe 窗口一闪就没</td><td>在 cmd 里运行看报错。最常见是 5010 端口被占用：<code>netstat -ano | findstr 5010</code></td></tr>
+  <tr><td>控制台提示执行端离线</td><td>执行端没启动，或执行端 <code>EXECUTOR_RELAY_URL</code> 指向不对，或 <code>EXECUTOR_API_KEY</code> 与中转 <code>RELAY_EXECUTOR_KEY</code> 不一致。</td></tr>
+  <tr><td>聚宽上报信号返回 401</td><td>聚宽端 <code>API_KEY</code> 与中转 <code>RELAY_SIGNAL_KEY</code> 不一致。</td></tr>
+  <tr><td>查询不到账户/持仓</td><td>同花顺弹窗拦截读取，重试；或客户端未登录。</td></tr>
+  <tr><td>升级后页面还是旧样子</td><td>99% 是浏览器缓存，<b>Ctrl+F5 强制刷新</b>。Docker 强刷无效说明镜像没重建，需 <code>up -d --build</code>。</td></tr>
+  <tr><td>Docker 只执行 up -d 不生效</td><td>源码改了必须 <code>build</code> 再 <code>up -d</code>。</td></tr>
+  <tr><td>忘了控制台管理员密码</td><td>停服务，备份后删 <code>relay_data.db</code>（或只删 users 表）再重启，会按配置重建默认管理员。</td></tr>
+  <tr><td>exe 被杀软拦截/报毒</td><td>PyInstaller 单文件常见误报，加入白名单；或改用源码方式运行。</td></tr>
+  <tr><td>同花顺下单偶发失败</td><td>客户端弹窗/升级导致控件失效；锁版本、关自动升级。失败会自动回报 failed。</td></tr>
+  <tr><td>执行端 exe 启动报缺模块</td><td>用 <code>EXECUTOR_SELFCHECK=1</code> 自检；若缺模型文件，请用官方发布的 exe 而非自行打包。</td></tr>
+</table>
+
+<h2 id="s13">13. 发布与升级约定</h2>
+<p>自 <b>v1.3.0</b> 起固定如下约定，每次发版一致：</p>
+<table>
+  <tr><th>项目</th><th>约定</th></tr>
+  <tr><td>产物命名</td><td><code>名称-版本号-时间</code>，如 <code>jq-relay-v1.3.0-20260911-1617-win64.exe</code></td></tr>
+  <tr><td>版本号来源</td><td><code>relay_server/config.py</code> 的 <code>VERSION</code>（唯一来源，执行端 <code>executor/config.py</code> 同步）</td></tr>
+  <tr><td>时间戳</td><td>打包当时 <code>YYYYMMDD-HHMM</code></td></tr>
+  <tr><td>发布目录</td><td><code>release/&lt;版本号&gt;-&lt;时间戳&gt;/</code></td></tr>
+  <tr><td>每次产出的包</td><td>中转 exe + 执行端 exe + docker 源码包 + 用户手册 HTML + 升级说明 + md5.txt</td></tr>
+  <tr><td>一键发版</td><td><code>python release/build_all.py</code>（含包自检 <code>verify_release.py</code>）</td></tr>
+</table>
+<div class="ok"><b>升级不会丢的东西</b>
+<code>relay_data.db</code>（数据）、你的环境变量配置。升级只需替换 exe，或 Docker <code>up -d --build</code>。</div>
+
+<h2 id="s14">14. 合规与风险提示</h2>
+<ul>
+  <li>本系统是<b>自建中转工具</b>，不构成任何投资建议，不对交易盈亏负责。</li>
+  <li>程序化交易须遵守所在券商与监管机构的要求，<b>实盘前请向券商报备</b>。</li>
+  <li>同花顺 UI 自动化属于非官方通道，客户端升级可能导致失效；生产环境建议使用 miniQMT 官方接口。</li>
+  <li>请妥善保管密钥（<code>RELAY_SIGNAL_KEY</code>/<code>RELAY_EXECUTOR_KEY</code>/管理员密码），公网部署务必修改默认值。</li>
+  <li>风控阈值、白名单等参数请按自身风险承受能力设置。</li>
+</ul>
+
+<h2 id="s15">15. 附录</h2>
+<h3>附录 A · 接口一览</h3>
+<table>
+  <tr><th>接口</th><th>方法</th><th>鉴权</th><th>用途</th></tr>
+  <tr><td><code>/api/signal</code></td><td>POST</td><td>SIGNAL_KEY</td><td>聚宽上报信号</td></tr>
+  <tr><td><code>/api/signal/poll</code></td><td>POST</td><td>EXECUTOR_KEY</td><td>执行端拉取信号</td></tr>
+  <tr><td><code>/api/feedback</code></td><td>POST</td><td>EXECUTOR_KEY</td><td>执行端回报信号结果</td></tr>
+  <tr><td><code>/api/heartbeat</code></td><td>POST</td><td>EXECUTOR_KEY</td><td>执行端心跳</td></tr>
+  <tr><td><code>/api/task/poll</code></td><td>POST</td><td>EXECUTOR_KEY</td><td>执行端拉取控制台任务</td></tr>
+  <tr><td><code>/api/task/feedback</code></td><td>POST</td><td>EXECUTOR_KEY</td><td>执行端回报任务结果</td></tr>
+  <tr><td><code>/api/status</code></td><td>GET</td><td>免鉴权</td><td>健康检查（含版本号）</td></tr>
+  <tr><td><code>/api/signals</code></td><td>GET</td><td>免鉴权</td><td>最近信号列表</td></tr>
+  <tr><td><code>/console/</code> 及 <code>/console/api/*</code></td><td>GET/POST</td><td>登录会话</td><td>Web 控制台</td></tr>
+</table>
+
+<h3>附录 B · 目录结构</h3>
+<pre><code>聚宽中转下单/
+├── relay_server/          中转服务端（Flask + SQLite）
+│   ├── app.py             主入口：信号收发
+│   ├── config.py          ★ 版本号 VERSION 的唯一来源
+│   ├── store.py           信号落库（幂等去重）
+│   ├── store_web.py       控制台存储（users/tasks/audit_log）
+│   ├── web_console.py     控制台后端（登录/用户/查询/下单/审计）
+│   ├── web_ui.py          控制台前端（内联单页，无外部依赖）
+│   ├── task_api.py        执行端任务通道
+│   └── Dockerfile         Docker 镜像定义
+├── executor/              执行端（Windows）
+│   ├── main.py            主循环（控制台任务 + 聚宽信号）
+│   ├── config.py          ★ MODE / 券商 / 风控 / 版本号
+│   ├── tasks.py           控制台任务执行器
+│   ├── risk.py            风控
+│   ├── broker_ths.py      A 同花顺
+│   ├── broker_thsauto.py  B 安卓模拟器
+│   ├── broker_miniqmt.py  C miniQMT
+│   └── captcha.py         验证码自动/人工处理
+├── joinquant/jq_signal.py 聚宽策略端上报脚本
+├── release/               ★ 发版脚本与产物
+│   ├── build_all.py       一键发版
+│   ├── build_exe.py       中转 exe
+│   ├── build_executor_exe.py 执行端 exe
+│   ├── build_docker.py    docker 源码包
+│   └── verify_release.py  包自检
+└── 启动*.bat              一键启动脚本（GBK 编码）</code></pre>
+
+<h3>附录 C · 版本信息</h3>
+<table>
+  <tr><td>版本号</td><td><b>v1.3.0</b></td></tr>
+  <tr><td>打包时间</td><td>20260911-1617</td></tr>
+  <tr><td>发布日期</td><td>2026-09-11</td></tr>
+  <tr><td>发布目录</td><td>v1.3.0-20260911-1617</td></tr>
+</table>
+
+</div>
+
+<footer>
+  聚宽中转下单系统 · v1.3.0 · 打包于 20260911-1617<br>
+  本手册随发布包一同生成，版本与包内一致。请以实际部署环境为准。
+</footer>
+
+</body>
+</html>

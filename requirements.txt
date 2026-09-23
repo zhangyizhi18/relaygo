@@ -1,0 +1,12 @@
+flask>=3.0
+requests>=2.31
+pillow>=10.0
+easytrader==0.23.7      # 仅方案A需要（同花顺客户端 UI 自动化）；它内部锁定 pywinauto==0.6.6
+ddddocr>=1.5.6          # 同花顺验证码自动识别（executor/captcha.py 使用）
+# xtquant               # 仅方案C需要（miniQMT）；一般从 QMT 安装目录复制 xtquant 文件夹更可靠
+
+# ⚠️ 重要：本文件不能直接加 pywinauto>=0.6.8（会和 easytrader 锁定的 0.6.6 冲突，
+#   pip 报 ResolutionImpossible）。装完本文件后必须单独覆盖：
+#   pip install pywinauto==0.6.8
+#   （0.6.6 在 64位Python 上批量 SendInput 有 bug；0.6.8 缺的函数名已由
+#    executor/pywinauto_compat.py 兼容垫片补齐。启动执行端.bat 已自动做这一步）

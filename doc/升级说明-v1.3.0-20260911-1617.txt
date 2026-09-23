@@ -1,0 +1,88 @@
+﻿========================================
+聚宽中转下单 · 发行版 v1.3.0
+发布日期: 2026-09-11
+打包时间: 20260911-1617
+发布目录: v1.3.0-20260911-1617
+========================================
+
+【本包内容】
+  jq-relay-v1.3.0-20260911-1617-win64.exe        中转服务（Windows exe）
+  jq-executor-v1.3.0-20260911-1617-win64.exe     执行端（Windows exe）
+  jq-relay-docker-v1.3.0-20260911-1617.zip       中转服务（Docker 源码包）
+  用户手册-v1.3.0-20260911-1617.html              详细用户手册
+  升级说明-v1.3.0-20260911-1617.txt               本文件
+  md5.txt                                   三个包的 md5 校验值
+
+【本次更新内容】
+1. ★ 首次成套发布：中转 exe + 执行端 exe + Docker 源码包 + 用户手册，
+   一次发版即可交付完整系统。
+2. 新发版约定（自本版起固定）：所有产物统一命名「名称-版本号-时间」，
+   如 jq-relay-v1.3.0-20260911-1617-win64.exe；产物集中在 release/<版本>-<时间>/ 目录。
+3. 新增执行端 exe 打包（release/build_executor_exe.py）：
+   自动收集 easytrader / ddddocr / pywinauto / onnxruntime / opencv 等重依赖，
+   打包后以 EXECUTOR_SELFCHECK=1 自检，确认依赖确实打进 exe。
+4. 新增 Docker 源码包（release/build_docker.py）：解压即 docker compose up -d --build。
+5. 新增一键发版（python release/build_all.py）与包自检（release/verify_release.py）。
+6. 新增详细用户手册（HTML，离线可开，含部署/控制台/风控/FAQ/合规全套）。
+7. 执行端增强：新增 EXECUTOR_SELFCHECK 依赖自检开关；exe 模式日志写到 exe 旁边。
+8. 版本号统一：中转服务与执行端均为 v1.3.0（/api/status 可核对）。
+
+【exe 使用方法 · 中转服务】
+1. 把 jq-relay-v1.3.0-20260911-1617-win64.exe 放到单独目录。
+2. 先进 cmd 设好密钥再启动（不要直接双击）：
+   set RELAY_SIGNAL_KEY=你的聚宽密钥
+   set RELAY_EXECUTOR_KEY=你的执行端密钥
+   set RELAY_WEB_SECRET=一段随机字符串
+   set RELAY_WEB_ADMIN_PASSWORD=你的控制台管理员密码
+   jq-relay-v1.3.0-20260911-1617-win64.exe
+3. 验证:
+   - 服务:   浏览器打开 http://127.0.0.1:5010/api/status ，看到 "version":"v1.3.0" 即成功
+   - 控制台: 浏览器打开 http://127.0.0.1:5010/console/ ，能打开登录页即成功
+4. 防火墙放行 5010 端口（聚宽云端与控制台都要能连进来）。
+
+【exe 使用方法 · 执行端】（跑在有同花顺/miniQMT 的 Windows 上）
+1. 把 jq-executor-v1.3.0-20260911-1617-win64.exe 放到执行端机器任意目录。
+2. 设环境变量后双击运行:
+   set EXECUTOR_MODE=dry_run          （先用模拟模式验证；真实下单改 ths）
+   set EXECUTOR_RELAY_URL=http://中转服务IP:5010
+   set EXECUTOR_API_KEY=与中转服务 RELAY_EXECUTOR_KEY 完全一致
+   jq-executor-v1.3.0-20260911-1617-win64.exe
+3. 依赖自检（可选）:
+   set EXECUTOR_SELFCHECK=1
+   jq-executor-v1.3.0-20260911-1617-win64.exe
+   打印 SELFCHECK_OK version=v1.3.0 mode=... 即依赖完整。
+4. 日志 executor.log 生成在 exe 同目录。
+
+【Docker 使用方法】
+   解压 jq-relay-docker-v1.3.0-20260911-1617.zip
+   cd jq-relay-docker-v1.3.0-20260911-1617
+   （先改 docker-compose.yml 里 environment 段的 4 个密钥）
+   docker compose up -d --build
+   数据落在 named volume jq-relay-data，容器重建不丢。
+
+【升级后自检清单】
+[ ] /api/status 返回的 version 是 v1.3.0
+[ ] http://<IP>:5010/console/ 能打开并登录（默认 admin / admin123，登录后立即改密码）
+[ ] 控制台「概览」显示执行端在线（需要执行端已在跑）
+[ ] 控制台「账户查询」能取到资金/持仓
+[ ] 聚宽端 joinquant/jq_signal.py 里的 API_KEY 与 RELAY_SIGNAL_KEY 一致
+[ ] 执行端 EXECUTOR_API_KEY 与中转 RELAY_EXECUTOR_KEY 一致
+[ ] 审计日志里能看到刚才的登录与查询记录
+[ ] （执行端 exe）EXECUTOR_SELFCHECK=1 能打印 SELFCHECK_OK
+
+【常见问题 FAQ】
+Q: 双击 exe 窗口一闪就没？
+A: 在 cmd 里运行它看报错。最常见是 5010 端口被占用（netstat -ano | findstr 5010）。
+Q: 升级后密钥/数据还在吗？
+A: 数据在 exe 旁边的 relay_data.db，换新 exe 不动它即可；新版会自动补建控制台的表，旧数据不受影响。
+Q: 控制台查不到账户信息 / 下单提示执行端离线？
+A: 控制台只负责下发指令，必须有一台开着同花顺/miniQMT 的 Windows 机器跑着执行端
+   且心跳正常。请先在执行端所在机器启动执行端。
+Q: 忘了控制台管理员密码？
+A: 停掉服务，备份后删掉 relay_data.db（或只删 users 表）再重启，会用配置里的默认管理员重建。
+Q: 升级后页面还是旧样子？
+A: 99% 是浏览器缓存，Ctrl+F5 强制刷新；Docker 版强刷无效说明镜像没重建（up -d --build）。
+Q: 执行端 exe 报缺模块/缺模型？
+A: 用 EXECUTOR_SELFCHECK=1 自检定位；请用官方发布的 exe，不要自行用别的环境打包。
+Q: exe 报毒/被杀软拦截？
+A: PyInstaller 单文件常见误报，加入白名单或改用源码方式运行。

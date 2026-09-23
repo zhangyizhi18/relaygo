@@ -1,0 +1,164 @@
+﻿========================================
+RelayGo聚宽中转下单系统 · 发行版 {{VER}}
+发布日期: {{DATE}}
+打包时间: {{TS}}
+发布目录: {{FOLDER}}
+========================================
+
+【本包内容】
+  relaygo-relay-{{VER}}-{{TS}}-win64.exe       中转服务（Windows exe）
+  relaygo-executor-{{VER}}-{{TS}}-win64.exe    执行端（Windows exe）
+  relaygo-relay-docker-{{VER}}-{{TS}}.zip      中转服务（Docker 源码包）
+  用户手册-{{VER}}-{{TS}}.html                 详细用户手册（建议先看）
+  升级说明-{{VER}}-{{TS}}.txt                  本文件
+  中转服务配置模板 / 执行端配置模板 .env.example
+  中转服务-配置.bat / 执行端-配置.bat          双击即可配置
+  md5.txt                                      exe/zip 的 md5 校验值
+
+【本次更新内容（{{VER}}）】
+1. ★ 修复 miniQMT（方案C）模式完全不可用 —— connect() 返回值判反：XtQuantTrader.connect()
+   返回的是 int（0=成功、非 0=失败），旧代码写成 `if not self.trader.connect()`，成功(0) 被
+   `not 0` 判成失败并抛异常，于是 miniQMT 明明已登录却一直报"connect() 失败"、券商永远不就绪。
+   subscribe() 同理（0=成功）已一并修正。
+2. ★ 修复 miniQMT 查资金必失败：query_stock_asset() 返回的是底层结构，**没有 m_dBalance**
+   字段（旧代码据此取"总资产"会 AttributeError，health_check 永远判不健康）。改用真实的
+   m_dTotalAsset 等字段，并对 xtquant「m_ 前缀 / 无前缀」两套字段名做容错取值。
+3. ★ miniQMT 补齐控制台能力：新增「查当日委托 / 查当日成交 / 按委托号撤单 / 一键全撤」
+   （此前这些在 miniQMT 模式返回空或"暂不支持"）；持仓/资金的中文键与控制台、dry_run 对齐。
+4. ★ 修复 THS 与 miniQMT 互相干扰：① 券商未就绪提示按模式区分 —— miniQMT 模式不再提示
+   "可在控制台点「重启同花顺」"，改为"请确认 miniQMT 极简客户端已启动并登录"；
+   ② 「清场」「重启同花顺」是同花顺 UI 专用，非 ths 模式点它直接返回"本模式不支持"，
+   不再先报"未就绪"、也不会误触发同花顺相关动作。
+5. miniQMT 重连加固：重连前先 stop() 旧连接（避免会话/线程池堆积）；health_check 未连接时
+   给出明确原因；新增离线回归测试 tools/test_miniqmt_offline.py（不连 QMT/中转）。
+6. ★ 修复 miniQMT 模式报「未找到 xtquant 库」、券商一直不就绪：PyInstaller onefile 打包
+   的 exe 运行时 sys.path 只含临时解压目录 _MEIPASS、不含 exe 所在目录，故此前把 xtquant
+   文件夹复制到 exe 同目录也 import 不到。现执行端启动时把「exe 所在目录」显式加入
+   sys.path，手册指引的「xtquant 放 exe 同目录」真正生效；提示文案同步改为「复制到
+   执行端程序(exe)所在目录」。
+7. ★ 连接健壮性加固：中转端 gunicorn `--keep-alive` 由默认 2 秒调到 10 秒，让浏览器/Web
+   控制台这类短连接复用更顺；执行端 RelayClient 的 requests.Session 显式加
+   `Connection: close`，每次请求走全新连接、不复用 keep-alive 池，从根上避免 gunicorn
+   回收空闲连接后 urllib3 复用到已断开 socket 而抛 ConnectionResetError / RemoteDisconnected。
+8. ★ 修复"控制台点重启同花顺后，行情窗口没有缩到右下角"：行情窗口缩角此前只挂在
+   自动拉起路径（ensure_started），控制台「重启同花顺」按钮/看门狗自动重启走的
+   restart_ths 路径漏了缩角。现重启连接成功后同样把行情主程序窗口缩到
+   THS_PARK_MAIN_SIZE（默认 100×100）并挪到屏幕右下角，与自动拉起行为一致。
+9. ★ 执行端-配置.bat 向导补上「同花顺行情主程序路径(hexin.exe)」一问：此前向导只问
+   xiadan.exe，漏了 main_f12 启动模式必需的行情主程序路径（写入 EXECUTOR_THS_MAIN_PATH）。
+   向导现为 5 步：中转地址 → 密钥 → 行情主程序路径 → 下单程序路径 → 模式。
+10. 沿用 v1.7.9 全部能力（重启连行情一起重启、交易窗口"出现后消失"立即重发 F12、
+   行情窗口缩角、THS_PARK_MAIN_WINDOW/THS_PARK_MAIN_SIZE/THS_RESEND_F12_GAP 配置）；
+   沿用 v1.7.8 全部能力（F12 只认行情主框架、冷启动"自退即重发"、看门狗联动、卖出持仓
+   校验修复等）；沿用 v1.7.7 全部能力（界面异常看门狗、下单前回查哨兵、一键清除全部记录、
+   清除待派发队列等，详见用户手册）。
+
+【v1.7.1 起新增的自检项（授权相关）】
+[ ] 首次打开控制台跳到「授权激活」页，页面显示 8 位授权账号
+[ ] 向管理员提供账号并拿到卡密，输入后提示激活成功并自动进入控制台
+[ ] 控制台顶栏出现绿色「授权：剩余 X 天 · …到期」徽章
+[ ] /api/status 里 license.state 为 ok
+
+【配置方式 · 不用命令行】
+程序首次运行会在 exe 同目录自动生成带中文说明的 .env；
+也可双击「中转服务-配置.bat」/「执行端-配置.bat」：
+  1 = 问答式填写（自动备份 .env.bak）
+  2 = 记事本打开 .env
+必填项：中转服务 RELAY_SIGNAL_KEY / RELAY_EXECUTOR_KEY / RELAY_WEB_SECRET；
+执行端 EXECUTOR_RELAY_URL / EXECUTOR_API_KEY（与中转 RELAY_EXECUTOR_KEY 一致）。
+优先级：系统环境变量 > .env > 默认值；升级永不覆盖已有 .env。
+
+【exe 使用方法 · 中转服务】
+1. 把 relaygo-relay-{{VER}}-{{TS}}-win64.exe 放到单独目录。
+2. 首次运行自动生成 .env（或用配置 bat 填好密钥）后启动。
+3. 验证:
+   - 服务:   浏览器打开 http://127.0.0.1:5010/api/status ，看到 "version":"{{VER}}" 即成功
+   - 控制台: 浏览器打开 http://127.0.0.1:5010/console/ ，能打开登录页即成功
+4. 防火墙放行 5010 端口（聚宽云端与控制台都要能连进来）。
+
+【exe 使用方法 · 执行端】（跑在有同花顺/miniQMT 的 Windows 上）
+1. 把 relaygo-executor-{{VER}}-{{TS}}-win64.exe 放到执行端机器任意目录。
+2. 首次运行生成 .env，填好 EXECUTOR_RELAY_URL 与 EXECUTOR_API_KEY
+   （EXECUTOR_MODE=dry_run 先模拟；真实下单改 ths）后重新启动。
+3. 依赖自检（可选）:
+   set EXECUTOR_SELFCHECK=1
+   relaygo-executor-{{VER}}-{{TS}}-win64.exe
+   打印 SELFCHECK_OK version={{VER}} mode=... 即依赖完整。
+4. 日志 executor.log 生成在 exe 同目录。
+
+【Docker 使用方法】
+   解压 relaygo-relay-docker-{{VER}}-{{TS}}.zip
+   cd relaygo-relay-docker-{{VER}}-{{TS}}
+   （改 docker-compose.yml 里 environment 段的 4 个密钥，或用同目录 .env）
+   docker compose up -d --build
+   数据落在 named volume jq-relay-data，容器重建不丢。
+
+【升级后自检清单】
+[ ] /api/status 返回的 version 是 {{VER}}
+[ ] http://<IP>:5010/console/ 能打开并登录（默认 admin / admin123，登录后立即改密码）
+[ ] 控制台「概览」显示执行端在线（{{VER}} 起：同花顺没就绪也显示在线，注意看状态文案）
+[ ] 控制台「账户查询」能取到资金/持仓（同花顺需已登录）
+[ ] 手动下单框只填 6 位数字（如 600519）失焦后自动补成 600519.XSHG
+[ ] 控制台「账户查询」底部持仓对账卡片能打开、能「立即对账」
+[ ] 「重启同花顺」按钮点了能返回成功（同花顺在运行则重启/没运行则启动）
+[ ] 控制台「聚宽信号」页能打开，时间线正常展开
+[ ] 聚宽端 joinquant/jq_signal.py 里的 API_KEY 与 RELAY_SIGNAL_KEY 一致
+[ ] 执行端 EXECUTOR_API_KEY 与中转 RELAY_EXECUTOR_KEY 一致
+[ ] 审计日志里能看到刚才的登录与查询记录
+[ ] （执行端 exe）EXECUTOR_SELFCHECK=1 能打印 SELFCHECK_OK
+
+【常见问题 FAQ】
+Q: 双击 exe 窗口一闪就没？
+A: 在 cmd 里运行它看报错。最常见是 5010 端口被占用（netstat -ano | findstr 5010）。
+Q: 升级后密钥/数据还在吗？
+A: 数据在 exe 旁边的 relay_data.db，换新 exe 不动它即可；新版会自动补建控制台的表，旧数据不受影响。
+Q: 控制台显示执行端在线，但查询/下单失败提示"可在本页点重启同花顺恢复"？
+A: {{VER}} 起"执行端在线"只代表执行端进程活着；同花顺没登录/没启动/假死时会出现这个提示。
+   直接点「重启同花顺」（在运行则重启、没运行则启动，自动等登录重连），不用到现场。
+Q: 同花顺窗口在但内容空白/点了没反应（假死）？
+A: 到控制台点「重启同花顺」。执行端已接管 easytrader 的关窗逻辑、绝不误关同花顺窗口；
+   真死机时连接会被主动拒绝并提示重启，不会带病重试。
+Q: 同花顺为什么突然没了/自动退出？
+A: 多为同花顺自动升级（updater 进程）在替换主程序。建议盘前手动升级到最新并关闭自动升级；
+   执行端发现未运行会在下轮自动拉起。
+Q: 手动下单填 6 位代码提示"无法识别市场"？
+A: 北交所（4/8/92 开头）、指数（399 等）不支持自动补后缀，属宁拒不错设计；请先确认标的。
+Q: 执行端心跳里的 [L2]/[L3] 是什么？
+A: 连续失败熔断等级（120 秒窗口：≥3 退避 / ≥6 暂停下单 / ≥12 熔断锁死）。
+   L3 需管理员在控制台点「解除熔断」或重启执行端；L0/L1/L2 会在交易成功后自动降回。
+Q: 忘了控制台管理员密码？
+A: 停掉服务，备份后删掉 relay_data.db（或只删 users 表）再重启，会用配置里的默认管理员重建。
+Q: 升级后页面还是旧样子？
+A: 99% 是浏览器缓存，Ctrl+F5 强制刷新；Docker 版强刷无效说明镜像没重建（up -d --build）。
+Q: 打开控制台只看到「授权激活」页？
+A: 正式版必须先激活：把页面上的 8 位「本机授权账号」发给管理员领取卡密，
+   粘贴到卡密框点「激活」，成功后自动进入控制台。账号由机器码生成、固定不可改。
+Q: 授权服务器临时连不上还能下单吗？
+A: 能。凭本地缓存进入 72 小时离线宽限期（顶栏徽章橙色提示），宽限期内一切正常；
+   超过宽限期才会拦截。恢复连接后自动回到正常状态。
+Q: Docker 部署激活后重启又要求重新激活？
+A: 容器内 /etc/machine-id 每次重建会变，导致授权账号变。请在 docker-compose.yml
+   挂载宿主机的固定 machine-id（volumes: - /etc/machine-id:/etc/machine-id:ro）。
+Q: 设置 RELAY_LICENSE_ENABLED=0 想跳过授权没生效？
+A: 正式版内置 release.lock，该开关被锁死（防绕过授权）；只有源码开发环境允许关闭。
+Q: 执行端 exe 报缺模块/缺模型？
+A: 用 EXECUTOR_SELFCHECK=1 自检定位；请用官方发布的 exe，不要自行用别的环境打包。
+Q: exe 报毒/被杀软拦截？
+A: PyInstaller 单文件常见误报，加入白名单或改用源码方式运行。
+Q: 用聚宽回测测试下单失败，提示"委托疑似未提交"？
+A: 回测信号带的是历史模拟价，与现价偏差过大会被券商拒单。请确保聚宽策略开头用的是
+   最新版 jq_signal.py（默认 FORCE_MARKET=True，回测信号一律按市价上报，由执行端取实时价
+   下单，与手动市价同路径）；且仅在交易时段做真实下单测试，收盘/周末券商不受理委托属正常。
+Q: 执行端日志出现"自动重启同花顺"？（{{VER}} 新增）
+A: 这是 v1.7.7 起的「界面异常看门狗」：同花顺界面异常（下单时查不出证券名称价格、控件
+   找不到、委托表读不出、弹窗卡死、验证码连续识别失败）连续达到阈值时会自动重启客户端
+   恢复，属正常自愈动作，不必人工干预。注意：风控拒绝（价格偏差超限、卖出无持仓）不会
+   触发它。可在执行端 .env 用 EXECUTOR_THS_WATCHDOG=0 关闭，或调整
+   EXECUTOR_THS_WATCHDOG_CONSECUTIVE（连续次数，默认3）/
+   EXECUTOR_THS_WATCHDOG_THRESHOLD（窗口次数，默认5）/
+   EXECUTOR_THS_WATCHDOG_COOLDOWN（冷却秒，默认120）/
+   EXECUTOR_THS_WATCHDOG_MAX_PER_HOUR（每小时上限，默认3）。
+Q: 执行端日志出现"同花顺未登记本次委托表单…已阻止点击[买入]"？（{{VER}} 新增）
+A: 这是回查哨兵在起作用：提交前发现同花顺还没回查出证券名称/可买股数（界面未就绪），
+   于是阻止了这次提交，避免带空价下单造成"假成功"。执行端会自动重建下单页重试一次；
+   若频繁出现，通常说明同花顺界面卡顿或下单过于密集，看门狗会按上文阈值重启客户端。

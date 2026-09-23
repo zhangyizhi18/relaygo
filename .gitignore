@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# 运行数据与日志（可能含账户信息，绝不入库）
+*.db
+*.db-shm
+*.db-wal
+*.log
+captcha_samples/
+captcha_last.png
+license_cache.json
+release.lock
+
+# 本地配置（程序首次启动会按 env_template.py 自动生成）
+.env
+.env.bak
+.env.local
+
+# 打包产物（体积大，可随时重新构建）
+release/_build/
+release/v*/
+release/*.exe
+release/*.zip
+
+# 第三方 SDK（版权属迅投，自行从券商 QMT 目录复制）
+executor/xtquant/
+
+# 临时
+*.tmp
+tmp_*.txt

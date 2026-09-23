@@ -1,0 +1,11 @@
+# Docker 构建时不要打进镜像的东西。
+# 说明：中转服务在容器里靠环境变量 / compose 的 env_file 取配置，
+#      所以 .env 与数据库、日志都不该进镜像（它们属于「用户数据」）。
+.env
+.env.local
+.env.*
+*.db
+*.log
+__pycache__/
+*.pyc
+_build/
